@@ -9,30 +9,32 @@ import com.example.recyclerdemo.Patient
 import com.example.recyclerdemo.R
 
 /**
-RecyclerView jest biblioteką, która tworzy listę(y).
-Zasadniczo zapewnia okno o ustalonym rozmiarze do załadowania dużego zbioru danych.
-Na początku tworzy widoki, z których będzie korzystać, gdy widoki wychodzą poza zakres (okno)
-i istnieje taka potrzeba, wykorzystuje je ponownie.
- źródło: https://myenv.net/course/getcourse/recyclerview-w-androidzie/
-
-: Adapter jest głównym kodem odpowiedzialnym za RecyclerView.
-Zawiera wszystkie ważne metody dotyczące implementacji RecyclerView.
-Podstawowe metody dla udanej implementacji to:
-
-1. onCreateViewHolder: zajmuje się załadowanie układu karty jako elementu dla RecyclerView.
-2. onBindViewHolder: zajmuje się ustawianiem różnych danych i metod związanych
-z kliknięciami w konkretne elementyRecyclerView.
-3. getItemCount: zwraca długość RecyclerView.
-
+ * Adapter responsible for displaying a list of patients in a RecyclerView.
  *
- * @property patients Lista pacjentów do wyświetlenia.
+ * RecyclerView works by:
+ *  - creating only a limited number of item views (ViewHolders),
+ *  - recycling them when they scroll off-screen,
+ *  - and binding new data to reused views.
+ *
+ * The adapter provides the logic for:
+ *  - creating new ViewHolder objects,
+ *  - binding patient data to each ViewHolder,
+ *  - reporting how many items exist.
+ *
+ * @property patients Mutable list of Patient objects displayed in RecyclerView.
  */
-class PatientAdapter(private val patients:  MutableList<Patient>) : RecyclerView.Adapter<PatientAdapter.PatientViewHolder>() {
+class PatientAdapter(
+    private val patients: MutableList<Patient>
+) : RecyclerView.Adapter<PatientAdapter.PatientViewHolder>() {
 
     /**
-     * Widok do przechowywania elementów interfejsu użytkownika dla każdego elementu w RecyclerView.
+     * ViewHolder stores references to the UI elements inside a single item view.
      *
-     * @param itemView Widok pojedynczego elementu RecyclerView.
+     * Thanks to ViewHolder:
+     *  - we avoid calling findViewById() repeatedly,
+     *  - performance is improved (especially for long lists).
+     *
+     * @param itemView The inflated XML layout representing one list item.
      */
     class PatientViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -42,69 +44,71 @@ class PatientAdapter(private val patients:  MutableList<Patient>) : RecyclerView
     }
 
     /**
-     * Tworzy nowy ViewHolder, który zawiera widok elementu w interfejsie użytkownika.
+     * Called when RecyclerView needs a new ViewHolder.
      *
-     * innymi słowy tworzymy nowy widok (na podstawie layoutu XML)
-     * dla danego typu elementu w RecyclerView. Następnie tworzymy i zwracamy nową instancję ViewHoldera,
-     * która przechowuje ten widok.
+     * This method:
+     *  - inflates the XML layout (patient_item.xml),
+     *  - creates a new ViewHolder containing the inflated view.
      *
-     * @param parent Grupa, do której zostanie dołączony nowo utworzony widok po utworzeniu.
-     * @param viewType Typ widoku, jesli nasz recyclerView posiada wiele typów.
-     * @return ViewHolder zawierający nowo utworzony widok.
+     * @param parent The parent ViewGroup into which the new view will be added.
+     * @param viewType View type (used if the list contains different item types).
      */
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PatientViewHolder {
-        val itemView = LayoutInflater.from(parent.context).inflate(R.layout.patient_item, parent, false)
+        // Inflate the layout for a single item row
+        val itemView = LayoutInflater.from(parent.context)
+            .inflate(R.layout.patient_item, parent, false)
         return PatientViewHolder(itemView)
     }
 
     /**
-     * Metoda onBindViewHolder jest odpowiedzialna za powiązanie danych z określonym elementem w RecyclerView.
+     * Binds data to the given ViewHolder for the item at the specified position.
      *
-     * Kiedy RecyclerView potrzebuje wyświetlić nowy widok (np. gdy jest on tworzony lub przewijany),
-     * to właśnie metoda onBindViewHolder jest wywoływana dla każdego elementu, który ma być wyświetlony.
-     * W tym momencie przekazujemy dane do widoku danego elementu.
+     * When an item scrolls on screen or needs updating:
+     *  - this method is called,
+     *  - the appropriate patient data is assigned to UI elements in the ViewHolder.
      *
-     * Konkretnie, w metodzie onBindViewHolder aktualizujemy zawartość widoku (takiego jak TextView lub ImageView)
-     * danymi z określonego elementu z listy danych. Dzięki temu możemy dynamicznie wyświetlać różne
-     * dane dla różnych elementów RecyclerView w oparciu o ich pozycje w liście.
-     *
-     * @param holder ViewHolder, którego dane mają być zaktualizowane.
-     * @param position Pozycja elementu w zestawie danych.
+     * @param holder The ViewHolder containing the item views.
+     * @param position Index of the item in the dataset.
      */
-
     override fun onBindViewHolder(holder: PatientViewHolder, position: Int) {
         val currentPatient = patients[position]
+
+        // Populate UI with patient data
         holder.nameTextView.text = currentPatient.name
         holder.ageTextView.text = currentPatient.age.toString()
         holder.imageView.setImageResource(currentPatient.imageResId)
 
-        // Ustawienie obsługi zdarzenia kliknięcia przycisku "Delete"
+        // Handle "Delete" button press
         holder.deleteButton.setOnClickListener {
             removePatient(currentPatient)
         }
     }
 
     /**
-     * Zwraca liczbę elementów w zestawie danych.
+     * Returns the total number of items in the list.
      *
-     * @return Liczba elementów w zestawie danych.
+     * RecyclerView uses this to determine how many items it should draw.
      */
-    override fun getItemCount() = patients.size
-
+    override fun getItemCount(): Int = patients.size
 
     /**
-     * Metoda usuwająca pacjenta z listy i aktualizująca RecyclerView.
+     * Removes a patient from the list and notifies RecyclerView about the change.
      *
-     * @param patient Pacjent, który ma zostać usunięty z listy.
+     * notifyItemRemoved(position) ensures:
+     *  - animations are applied,
+     *  - list updates efficiently,
+     *  - only the removed item is re-drawn (not the whole list).
+     *
+     * @param patient The patient to remove.
      */
     private fun removePatient(patient: Patient) {
         val position = patients.indexOf(patient)
         if (position != -1) {
             patients.removeAt(position)
             notifyItemRemoved(position)
-            // Obsługa przypadku, gdy lista jest pusta
+
             if (patients.isEmpty()) {
-                println("Pusta lista")
+                println("Pusta lista") // For debugging purposes
             }
         }
     }

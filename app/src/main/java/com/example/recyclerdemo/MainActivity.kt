@@ -7,14 +7,24 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 /**
- * Główna aktywność aplikacji, która wyświetla listę pacjentów za pomocą RecyclerView.
+ * Main activity of the application.
+ *
+ * Displays a list of patients using RecyclerView.
+ * RecyclerView requires:
+ *  - a LayoutManager (how items should be arranged)
+ *  - an Adapter (how items should be displayed)
  */
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Set the content view to the layout file that contains RecyclerView.
+        // Without this, RecyclerView won't appear on screen.
         setContentView(R.layout.activity_main)
 
-        // Lista pacjentów do wyświetlenia w RecyclerView
+        // Create a list of patients that will be displayed in RecyclerView.
+        // This list is passed to the adapter and defines the UI content.
         val patients = mutableListOf(
             Patient("John Doe", 30, R.drawable.patient1),
             Patient("Jane Smith", 25, R.drawable.patient2),
@@ -24,14 +34,18 @@ class MainActivity : ComponentActivity() {
             Patient("James Brown", 45, R.drawable.patient6)
         )
 
-        // Inicjalizacja RecyclerView
+        // Find RecyclerView defined in activity_main.xml by its ID.
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
 
-        // Ustawienie adaptera dla RecyclerView, który będzie obsługiwał listę pacjentów
+        // Create an instance of the adapter.
+        // The adapter knows how to convert each Patient object into a list item view.
         val adapter = PatientAdapter(patients)
+
+        // Assign the adapter to RecyclerView.
         recyclerView.adapter = adapter
 
-        // Ustawienie menedżera układu dla RecyclerView, w tym przypadku używamy LinearLayoutManager
+        // Set the LayoutManager responsible for arranging items vertically (one under another).
+        // LinearLayoutManager is the simplest type of layout manager (like a standard list).
         recyclerView.layoutManager = LinearLayoutManager(this)
     }
 }
